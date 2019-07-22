@@ -16,6 +16,15 @@
 //------------------------------------------------------------------------------
 
 ;const Travelogue = (function(root) {
+    const timeit = (fn, ...args) => {
+        const start = new Date();
+        const result = fn.call(undefined, ...args);
+        const end = new Date();
+        const delta = end - start
+        console.log(`timeit: ${start.toJSON()} => ${end.toJSON()} = ${delta}`);
+        return result;
+    };
+
     const fetch = function(url, handler) {
         const success_wrapper = function() { handler(JSON.parse(xhr.responseText)); };
         const xhr = new XMLHttpRequest();
@@ -495,13 +504,7 @@
         fetch: fetch,
         loadLogs: loadLogs,
         parseHash: hash => HashBits.fromHash(hash),
-        timeit: (fn, ...args) => {
-            let start = new Date();
-            let result = fn.call(undefined, args);
-            let end = new Date();
-            console.log(start + ' | ' + end + ' = ' + (end - start));
-            return result;
-        },
+        timeit: timeit,
         DOM: DOM,
         controller: controller,
     };

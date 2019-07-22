@@ -2,6 +2,7 @@ from itertools import chain
 from django.conf import settings
 from rest_framework import serializers
 
+from django.contrib.auth.models import User
 from ..models import TravelLog, TravelEntity
 
 
@@ -36,19 +37,25 @@ class TravelEntitySerializer(serializers.ModelSerializer):
         )
 
 
-class TravelUserLogSerializer(serializers.Serializer):
-    logs = serializers.SerializerMethodField('get_logs')
-    entities = serializers.SerializerMethodField('get_entities')
+class TravelUserLogSerializer(serializers.ModelSerializer):
+    logs = serializers.SerializerMethodField()
+    entities = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['logs', 'entities']
 
     def get_logs(self, obj):
         return TravelLogSerializer(
-            TravelLog.objects.all(),
+            TravelLog.objects.filter(user=obj),
             many=True
         ).data
 
     def get_entities(self, obj):
         return TravelEntitySerializer(
-            TravelEntity.objects.filter(travellog__rating__gte=0).distinct(),
+            TravelEntity.objects.filter(
+                travellog__user=obj
+            ).distinct().select_related('country', 'flag', 'country__flag', 'type'),
             many=True
         ).data
 
@@ -105,23 +112,7 @@ class FlagEntitySerializer(serializers.ModelSerializer):
         return obj.flag.svg.url
 
 
-class FlagSerializer(serializers.Serializer):
-
-    @property
-    def data(self):
-        return {
-        'countries': FlagEntitySerializer(
-            TravelEntity.objects.countries().filter(
-                code__in={*chain(*FLAG_GROUPS)}
-            ).select_related('flag'),
-            many=True
-        ).data,
-        'groups': FLAG_GROUPS
-    }
-
-
 def flag_data():
-    return FlagSerializer().data
     return {
         'countries': FlagEntitySerializer(
             TravelEntity.objects.countries().filter(

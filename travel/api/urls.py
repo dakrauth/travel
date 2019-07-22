@@ -1,7 +1,7 @@
-from django.conf.urls import *
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    url('^logs/([-\w]+)/$', views.LogListView.as_view(), name='user_log_api'),
-    url('^flag-game/$', views.FlagGameView.as_view(), name='flag_game_api'),
+    path('logs/<str:username>/', views.UserLogListView.as_view(), name='user_log_api'),
+    path('flag-game/', views.FlagGameView.as_view(), name='flag_game_api'),
 ]
